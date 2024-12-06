@@ -7,6 +7,36 @@ const WeathersWeek = ({ lat, lon }) => {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Ho provato a usare il Date per poter recuperare il giorno della settimana
+  const getDayOfWeek = (timestamp) => {
+    const date = new Date(timestamp * 1000);
+    const options = { weekday: "long" }; //imposto il fornato da visualizzare per il giorno "long","short" o "narrow"
+    return date.toLocaleDateString("en-US", options);
+  };
+
+  // Ho provato a usare il Date per poter avere un formato orario diviso in Ore e Minuti
+  const getTime = (timestamp) => {
+    // Ho notato che mi restiuisce solamente 6 giorni, di conseguenza i giorni visualizzati saranno 6
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  // Ho provato a convertire da kelvin a Celsius per avere i gradi corretti
+  const kelvinToCelsius = (kelvin) => Math.round(kelvin - 273.15);
+
+  // Ho provato a scrivere questa funzione per ottenere solo un'elemento per ogni giorno
+  const getUniqueDays = (data) => {
+    const days = {};
+    data.forEach((item) => {
+      const day = getDayOfWeek(item.dt);
+      // Aggiungo solo il primo elemento di ogni giorno
+      if (!days[day]) {
+        days[day] = item;
+      }
+    });
+    return Object.values(days);
+  };
+
   // componentDidUpdate usando useEffect (Hooks)
   useEffect(() => {
     if (!lat || !lon) return;
@@ -17,7 +47,8 @@ const WeathersWeek = ({ lat, lon }) => {
     fetch(`http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=b5f2ca6ae963061e9702a8d5d82f93da`)
       .then((response) => response.json())
       .then((data) => {
-        setForecastData(data.list.slice(0, 5)); //Per adesso ne ho gestiti solamente 5, l'idea era di fare un carosello slick da implementare
+        //Alla fine ho gestito tramite una funzione, passandogli l'oggetto, filtrando i giorni della settimana
+        setForecastData(getUniqueDays(data.list));
         setLoading(false);
       })
       .catch((error) => {
@@ -29,22 +60,6 @@ const WeathersWeek = ({ lat, lon }) => {
 
   if (loading) return <div>Loading...</div>;
   if (errorMessage) return <div>{errorMessage}</div>;
-
-  // Ho provato a usare il Date per poter recuperare il giorno della settimana
-  const getDayOfWeek = (timestamp) => {
-    const date = new Date(timestamp * 1000);
-    const options = { weekday: "long" }; //imposto il fornato da visualizzare per il giorno "long","short" o "narrow"
-    return date.toLocaleDateString("en-US", options);
-  };
-
-  // Ho provato a usare il Date per poter avere un formato orario diviso in Ore e Minuti
-  const getTime = (timestamp) => {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-  };
-
-  // Ho provato a convertire da kelvin a Celsius per avere i gradi corretti
-  const kelvinToCelsius = (kelvin) => Math.round(kelvin - 273.15);
 
   return (
     <div className="weather-week">
